@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register SIM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="face-recognition-container">
+        <%- include('partials/header') %>
+        <h1>Register SIM</h1>
+        <div id="statusSim" class="status-message"></div>
+        <div class="sim-id-container">
+            <label for="simIdInput">Enter SIM Number:</label>
+            <input type="text" id="simIdInput" placeholder="e.g., SIM1234567890">
+            <button id="checkSimBtn">Check SIM</button>
+            <div id="phoneSelection" style="display: none;">
+                <label for="phoneInput">Enter Phone Number (starts with +26876 or +26878, 8 digits total):</label>
+                <input type="text" id="phoneInput" value="+2687" placeholder="+26876XXXXXX">
+                <label for="paymentPlanSelect">Select Payment Plan:</label>
+                <select id="paymentPlanSelect" required>
+                    <option value="" disabled selected>Select a plan</option>
+                    <option value="Prepaid">Prepaid</option>
+                    <option value="Postpaid">Postpaid</option>
+                </select>
+                <button id="registerBtn">Register</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('checkSimBtn').addEventListener('click', async () => {
+            const simId = document.getElementById('simIdInput').value.trim();
+            const statusSim = document.getElementById('statusSim');
+            if (!simId) {
+                statusSim.textContent = 'Please enter a SIM number.';
+                statusSim.className = 'status-message error';
+                return;
+            }
+            try {
+                const response = await fetch('/api/check-sim', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ simId })
+                });
+                const result = await response.json();
+                if (response.ok && result.available) {
+                    statusSim.textContent = result.message;
+                    statusSim.className = 'status-message success';
+                    document.getElementById('phoneSelection').style.display = 'block';
+                } else {
+                    statusSim.textContent = result.message || 'SIM not available or invalid.';
+                    statusSim.className = 'status-message error';
+                }
+            } catch (err) {
+                statusSim.textContent = 'Error checking SIM: ' + err.message;
+                statusSim.className = 'status-message error';
+            }
+        });
+
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            const phoneNumber = document.getElementById('phoneInput').value.trim().replace(/\s/g, '');
+            const simId = document.getElementById('simIdInput').value.trim();
+            const paymentPlan = document.getElementById('paymentPlanSelect').value;
+            const statusSim = document.getElementById('statusSim');
+            if (!phoneNumber) {
+                statusSim.textContent = 'Please enter a phone number.';
+                statusSim.className = 'status-message error';
+                return;
+            }
+            if (!phoneNumber.startsWith('+2687')) {
+                statusSim.textContent = 'Phone number must start with +2687.';
+                statusSim.className = 'status-message error';
+                return;
+            }
+            const digitAfter6 = phoneNumber.charAt(5);
+            if (digitAfter6 !== '6' && digitAfter6 !== '8') {
+                statusSim.textContent = 'Phone number must start with +26876 or +26878.';
+                statusSim.className = 'status-message error';
+                return;
+            }
+            if (phoneNumber.length !== 12) {
+                statusSim.textContent = 'Phone number must be 8 digits long (e.g., +26876XXXXXX).';
+                statusSim.className = 'status-message error';
+                return;
+            }
+            const remainingDigits = phoneNumber.slice(6);
+            if (!/^\d{6}$/.test(remainingDigits)) {
+                statusSim.textContent = 'The last 6 characters must be digits.';
+                statusSim.className = 'status-message error';
+                return;
+            }
+            if (!paymentPlan) {
+                statusSim.textContent = 'Please select a payment plan (Prepaid or Postpaid).';
+                statusSim.className = 'status-message error';
+                return;
+            }
+            try {
+                const response = await fetch('/api/register-phone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ simId, phoneNumber, names: '<%= req.session.name %>', surname: '<%= req.session.surname %>', paymentPlan })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    statusSim.textContent = result.message;
+                    statusSim.className = 'status-message success';
+                    document.getElementById('phoneSelection').style.display = 'none';
+                } else {
+                    statusSim.textContent = result.error || 'Error registering phone number.';
+                    statusSim.className = 'status-message error';
+                }
+            } catch (err) {
+                statusSim.textContent = 'Error registering: ' + err.message;
+                statusSim.className = 'status-message error';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SIM Swap</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="face-recognition-container">
+        <%- include('partials/header') %>
+        <h1>SIM Swap</h1>
+        <div id="statusSwap" class="status-message"></div>
+        <div class="sim-id-container">
+            <label for="existingPhoneInput">Existing Phone Number:</label>
+            <input type="text" id="existingPhoneInput" placeholder="e.g., +26876123456">
+            <label for="newSimIdInput">New SIM ID:</label>
+            <input type="text" id="newSimIdInput" placeholder="e.g., SIM1234567890">
+            <button id="swapSimBtn">Swap SIM</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('swapSimBtn').addEventListener('click', async () => {
+            const existingPhone = document.getElementById('existingPhoneInput').value.trim();
+            const newSimId = document.getElementById('newSimIdInput').value.trim();
+            const statusSwap = document.getElementById('statusSwap');
+            if (!existingPhone || !newSimId) {
+                statusSwap.textContent = 'Please enter both phone number and new SIM ID.';
+                statusSwap.className = 'status-message error';
+                return;
+            }
+            try {
+                const response = await fetch('/api/sim-swap', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber: existingPhone, newSimId, idNumber: '<%= req.session.idNumber %>' })
+                });
+                const result = await response.json();
+                statusSwap.textContent = result.message;
+                statusSwap.className = result.success ? 'status-message success' : 'status-message error';
+            } catch (err) {
+                statusSwap.textContent = 'Error swapping SIM: ' + err.message;
+                statusSwap.className = 'status-message error';
+            }
+        });
+    </script>
+</body>
+</html>

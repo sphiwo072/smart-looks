@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Numbers - SMART LOOKS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="face-recognition-container">
+        <%- include('partials/header') %>
+        <h1>Manage Numbers</h1>
+        <div id="statusMessage" class="status-message"></div>
+        <% if (phoneNumbers && phoneNumbers.length > 0) { %>
+            <table class="numbers-table">
+                <thead>
+                    <tr>
+                        <th>Phone Number</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% phoneNumbers.forEach(number => { %>
+                        <tr>
+                            <td><%= number.phoneNumber %></td>
+                            <td><%= number.isActive ? 'Active' : 'Inactive' %></td>
+                            <td>
+                                <button class="toggle-button" data-phonenumber="<%= number.phoneNumber %>" data-active="<%= number.isActive %>">
+                                    <%= number.isActive ? 'Deactivate' : 'Activate' %>
+                                </button>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p>No phone numbers registered.</p>
+        <% } %>
+    </div>
+    <script>
+        document.querySelectorAll('.toggle-button').forEach(button => {
+            button.addEventListener('click', async () => {
+                const phoneNumber = button.getAttribute('data-phonenumber');
+                const isActive = button.getAttribute('data-active') === 'true';
+                const newStatus = !isActive;
+
+                try {
+                    const response = await fetch('/api/toggle-number', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phoneNumber, isActive: newStatus })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        button.textContent = newStatus ? 'Activate' : 'Deactivate';
+                        button.setAttribute('data-active', newStatus);
+                        document.getElementById('statusMessage').textContent = result.message;
+                        document.getElementById('statusMessage').className = 'status-message success';
+                    } else {
+                        document.getElementById('statusMessage').textContent = result.message;
+                        document.getElementById('statusMessage').className = 'status-message error';
+                    }
+                } catch (error) {
+                    document.getElementById('statusMessage').textContent = 'Error updating status.';
+                    document.getElementById('statusMessage').className = 'status-message error';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

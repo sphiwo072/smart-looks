@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SMART LOOKS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="face-recognition-container">
+        <%- include('partials/header') %>
+        <h1>SMART LOOKS</h1>
+        
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="display-area">
+            <div class="controls">
+                <button id="captureBtn" class="control-button">
+                    <span class="button-icon">📸</span> Capture Image
+                </button>
+                <div class="upload-container">
+                    <input type="file" id="uploadBtn" accept="image/*" style="display: none;">
+                    <button id="uploadTrigger" class="control-button" onclick="document.getElementById('uploadBtn').click()">
+                        <span class="button-icon">📤</span> Upload ID
+                    </button>
+                    <span id="fileName" class="file-name"></span>
+                </div>
+                <button id="compareBtn" class="control-button">Verify</button>
+            </div>
+            <video id="video" width="320" height="240" autoplay playsinline></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+            <div class="images-container">
+                <div class="captured-image">
+                    <h3>Captured Image</h3>
+                    <div id="capturedImageDisplay"></div>
+                </div>
+                <div class="uploaded-image">
+                    <h3>Uploaded ID Image</h3>
+                    <div id="uploadedImageDisplay"></div>
+                </div>
+            </div>
+        </div>
+        <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+        <div class="user-details">
+            <label for="surname">Surname:</label>
+            <input type="text" id="surname" name="surname" placeholder="Enter your surname" required>
+
+            <label for="names">Names (as on ID):</label>
+            <input type="text" id="names" name="name" placeholder="Enter your names" required>
+
+            <label for="dob">Date of Birth (dd/mm/yyyy):</label>
+            <input type="text" id="dob" name="date_of_birth" placeholder="e.g., 16/03/2025" pattern="\d{2}/\d{2}/\d{4}" required>
+
+            <label for="chiefCode">Chief Code:</label>
+            <input type="text" id="chiefCode" name="chiefCode" placeholder="Enter your chief code" required>
+        </div>
+    </div>
+
+    <div class="auth-links">
+        <% if (!req.session.userId) { %>
+            <a href="/login">Login</a> | <a href="/register">Register</a>
+        <% } %>
+    </div>
+
+    <% if (req.session.userId) { %>
+        <script>
+            window.loggedInUserIdNumber = "<%= req.session.idNumber %>";
+            console.log('Set window.loggedInUserIdNumber:', window.loggedInUserIdNumber);
+        </script>
+    <% } %>
+
+    <script>
+        // Display the chosen file name below the Upload ID button
+        document.getElementById('uploadBtn').addEventListener('change', function() {
+            const fileNameDisplay = document.getElementById('fileName');
+            if (this.files.length > 0) {
+                fileNameDisplay.textContent = this.files[0].name;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        });
+    </script>
+
+    <script src="app.js"></script>
+</body>
+</html>
